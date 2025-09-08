@@ -18,7 +18,7 @@ int main(void){
     cin >> s1 >> s2;
     cin >> p1 >> p2 >> p3 >> p4;
 
-    for(i = 1;i <= 10;i++) s1.push_back('0'), s2.push_back('1');
+    for(i = 1;i <= 10;i++) s1.push_back('0'), s2.push_back('0');
 
     for(i = 0;i < MAXN;i++) for(j = 0;j < MAXN;j++) dp[i][j] = INF;
 
