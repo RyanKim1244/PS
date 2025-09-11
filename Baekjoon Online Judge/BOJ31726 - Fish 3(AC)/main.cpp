@@ -5,8 +5,10 @@ using ll = long long;
 
 const ll MAXN = 3e5 + 5, INF = 1e18;
 ll N, D;
-ll arr[MAXN], S[MAXN], A[MAXN], edge[MAXN];
+ll arr[MAXN], S[MAXN], A[MAXN], edge[MAXN], X[MAXN], LB[MAXN];
 pair<ll, ll> sparse[MAXN][25];
+
+bool sp[MAXN][25];
 
 struct segment{
     ll tree[4 * MAXN], lazy[4 * MAXN];
@@ -51,6 +53,32 @@ struct segment{
     }
 }seg;
 
+struct segment2{
+    ll tree[4 * MAXN];
+
+    void init(ll node, ll s, ll e){
+        ll mid = (s + e) >> 1;
+
+        if(s == e){
+            tree[node] = arr[s] - LB[s];
+            return;
+        }
+        init(node * 2, s, mid);
+        init(node * 2 + 1, mid + 1, e);
+
+        tree[node] = max(tree[node * 2], tree[node * 2 + 1]);
+    }
+
+    ll query(ll node, ll s, ll e, ll l, ll r){
+        ll mid = (s + e) >> 1;
+        if(e < l || r < s) return -INF;
+
+        if(l <= s && e <= r) return tree[node];
+
+        return max(query(node * 2, s, mid, l, r), query(node * 2 + 1, mid + 1, e, l, r));
+    }
+}seg2;
+
 int main(void){
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
@@ -60,7 +88,27 @@ int main(void){
 
     vector<ll> v;
     for(i = 1;i <= N;i++) {
-        cin >> arr[i];
+        cin >> arr[i]; X[i] = arr[i];
+
+        LB[i] = X[i] / D + 1;
+    }
+
+    ll last = 0;
+    for(i = N;i >= 1;i--){
+        ll A = (arr[i] + last) % D; arr[i] += last;
+
+        if (A == 0) {
+            arr[i] /= D;
+            continue;
+        }
+        arr[i] += (D - A); last += (D - A);
+
+        arr[i] /= D;
+    }
+
+    seg2.init(1, 1, N);
+
+    for(i = 1;i <= N;i++){
         S[i] = S[i - 1] + arr[i];
 
         v.push_back(arr[i]);
@@ -79,13 +127,19 @@ int main(void){
         if(B == -INF) edge[i] = 0;
         else edge[i] = B;
 
-        seg.update(1, 1, N, A[i] + 1, N, i);
+        seg.update(1, 1, N, A[i], N, i);
     }
 
-    for(i = 1;i <= N;i++) sparse[i][0] = {edge[i], arr[i] * (i - edge[i])};
+    for(i = 1;i <= N;i++) {
+        sparse[i][0] = {edge[i], arr[i] * (i - edge[i])};
+
+        ll NUM = seg2.query(1, 1, N, edge[i] + 1, i);
+        if(NUM >= arr[i]) sp[i][0] = true;
+    }
     for(i = 1;i <= 20;i++){
         for(j = 1;j <= N;j++){
             sparse[j][i] = {sparse[sparse[j][i - 1].first][i - 1].first, sparse[j][i - 1].second + sparse[sparse[j][i - 1].first][i - 1].second};
+            sp[j][i] = sp[j][i - 1] | sp[sparse[j][i - 1].first][i - 1];
         }
     }
 
@@ -94,20 +148,23 @@ int main(void){
     while(Q--){
         ll l, r; cin >> l >> r;
 
-        ll sum = 0, now = r;
+        ll sum = 0, now = r; bool flag = false;
         while(1){
             for(i = 20;i >= 0;i--){
                 if(sparse[now][i].first >= l) {
+                    flag |= sp[now][i];
                     sum += sparse[now][i].second, now = sparse[now][i].first;
                     break;
                 }
             }
             if(sparse[now][0].first < l){
-                sum += arr[now] * (now - l + 1);;
+                if (seg2.query(1, 1, N, l, now) >= arr[now]) flag = 1;
+                sum += arr[now] * (now - l + 1);
                 break;
             }
         }
-        cout << S[r] - S[l - 1] - sum << "\n";
+        if(flag) cout << -1 << "\n";
+        else cout << S[r] - S[l - 1] - sum << "\n";
     }
     return 0;
 }
