@@ -3,7 +3,7 @@
 using namespace std;
 using ll = long long;
 
-ll X, Y;
+ll X, Y, n;
 
 int main(void){
     ios_base::sync_with_stdio(false);
@@ -13,8 +13,6 @@ int main(void){
     cin >> X >> Y;
     for(i = 1;i <= 8;i++){
         ll Z = X + Y;
-    
-        //cout << Z << " ";
 
         ll z = 0;
         while(Z){
@@ -23,8 +21,6 @@ int main(void){
             z *= 10; Z /= 10;
         }
         X = Y; Y = z;
-
-        //cout << z << "\n";
     }
     cout << Y;
     return 0;
